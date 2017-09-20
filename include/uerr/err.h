@@ -202,6 +202,7 @@ __extern_c__
 static FORCEINLINE void
 err_dump(err_t *__restrict__ self, FILE *__restrict stream) {
   i8_t const *lvl;
+  FILE *file;
 
   switch (self->lvl) {
     case ERRLVL_NOTICE:
@@ -226,6 +227,38 @@ err_dump(err_t *__restrict__ self, FILE *__restrict stream) {
       lvl, self->msg, self->fn, self->file, self->line
     );
   }
+  if ((file = fopen(self->file, "rb")) != nil) {
+    i8_t buf[4096], *begin, *end;
+    u64_t size;
+    i16_t i;
+
+    i = 0;
+    begin = end = nil;
+    while (i < self->line && (size = fread(buf, 1, 4096, file)) > 0) {
+      end = buf;
+      loop:
+      while (size && *end && *end != '\n') {
+        ++end;
+        if (--size == 0) {
+          size = fread(buf, 1, 4096, file);
+          goto loop;
+        }
+      }
+      if (*end == '\n') {
+        if (++i == self->line) break;
+        begin = ++end;
+        if (--size) goto loop;
+      }
+    }
+    if (begin && end) {
+      fprintf(stream, "%.*s\n", (int) (end - begin), begin);
+      while (*begin && *begin <= ' ') {
+        ++begin;
+        putc(' ', stream);
+      }
+      fputs("^\n", stream);
+    }
+  }
 }
 
 __extern_c__
@@ -233,23 +266,12 @@ static FORCEINLINE ret_t
 err_stack_dump(err_stack_t *__restrict__ self, FILE *__restrict stream) {
   ret_t ret;
   err_t err;
-  u16_t i;
 
-  if ((ret = err_stack_pop(self, &err)) == RET_SUCCESS) {
+  while ((ret = err_stack_pop(self, &err)) == RET_SUCCESS) {
     err_dump(&err, stream);
-  } else if (ret == RET_ERRNO) {
-    return RET_ERRNO;
   }
-  if (self->len) {
-    fprintf(stream, "stack trace:\n");
-    i = 0;
-    while ((ret = err_stack_pop(self, &err)) == RET_SUCCESS) {
-      fprintf(stream, "  %d. ", ++i);
-      err_dump(&err, stream);
-    }
-    if (ret == RET_ERRNO) {
-      return RET_ERRNO;
-    }
+  if (ret == RET_ERRNO) {
+    return RET_ERRNO;
   }
   return RET_SUCCESS;
 }
