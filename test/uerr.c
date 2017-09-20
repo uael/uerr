@@ -32,7 +32,8 @@ main(void) {
   err_stack_ctor(&stack);
   err_stack_push(&stack, err(ERRLVL_ERROR, ERRNO_BADF));
   err_stack_push(&stack, err_usr(ERRLVL_NOTICE, "invalid opt."));
-  err_stack_dump(&stack, stderr);
+  err_stack_push(&stack, err_usr(ERRLVL_WARNING, "Hello world !"));
+  err_stack_dump(&stack, stdout);
   err_stack_dtor(&stack);
   return 0;
 }

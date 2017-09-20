@@ -47,6 +47,7 @@ struct err {
   u32_t line;
   errno_t code;
   i8_t msg[U8_MAX];
+  i32_t col;
 };
 
 __extern_c__
@@ -164,10 +165,18 @@ err_stack_pop(err_stack_t *__restrict__ self, err_t *__restrict__ out) {
   if (self->len == 0) {
     return RET_FAILURE;
   }
-  --self->len;
   if (out != nil) {
-    *out = self->buf[self->len];
-  }
+      *out = self->buf[0];
+    }
+    if (self->len == 1) {
+      --self->len;
+    } else {
+      memmove(
+        self->buf,
+        self->buf + 1,
+        (size_t) --self->len * sizeof(err_t)
+      );
+    }
   if (__ISPOW2(self->len) && self->len < self->cap) {
     u16_t cap;
     err_t *buf;
@@ -198,36 +207,60 @@ err_stack_merge(err_stack_t *__restrict__ self, err_stack_t *__restrict__ x) {
   return RET_SUCCESS;
 }
 
+#ifndef CC_MSVC
+# define RESET   "\033[0m"
+# define RED     "\033[31m"
+# define YELLOW  "\033[33m"
+# define CYAN    "\033[36m"
+# define BOLD    "\033[1m"
+#else
+# define RESET
+# define RED
+# define YELLOW
+# define CYAN
+# define BOLD
+#endif
+
 __extern_c__
 static FORCEINLINE void
 err_dump(err_t *__restrict__ self, FILE *__restrict stream) {
-  i8_t const *lvl;
+  i8_t const *lvl, *lvl_color;
   FILE *file;
 
   switch (self->lvl) {
     case ERRLVL_NOTICE:
       lvl = "notice";
+      lvl_color = BOLD CYAN;
       break;
     case ERRLVL_WARNING:
       lvl = "warning";
+      lvl_color = BOLD YELLOW;
       break;
     case ERRLVL_FATAL:
       lvl = "fatal";
+      lvl_color = BOLD RED;
       break;
     default:
       lvl = "error";
+      lvl_color = BOLD RED;
       break;
   }
+  fprintf(stream,
+    BOLD "%s:" RESET " In function ‘" BOLD "%s" RESET "’:\n",
+    self->file, self->fn
+  );
   if (self->code > 0 && self->code != ERRNO_USR) {
-    fprintf(stream, "%s (%d): '%s' in %s@%s:%d\n",
-      lvl, self->code, self->msg, self->fn, self->file, self->line
+    fprintf(stream,
+      BOLD "%s:%d: %s%s (%d):" " %s\n" RESET,
+      self->file, self->line, lvl_color, lvl, self->code, self->msg
     );
   } else {
-    fprintf(stream, "%s: '%s' in %s@%s:%d\n",
-      lvl, self->msg, self->fn, self->file, self->line
+    fprintf(stream,
+      BOLD "%s:%d: %s%s:" " %s\n" RESET,
+      self->file, self->line, lvl_color, lvl, self->msg
     );
   }
-  if ((file = fopen(self->file, "rb")) != nil) {
+  if ((file = fopen(self->file, "r")) != nil) {
     i8_t buf[4096], *begin, *end;
     u64_t size;
     i16_t i;
@@ -252,12 +285,14 @@ err_dump(err_t *__restrict__ self, FILE *__restrict stream) {
     }
     if (begin && end) {
       fprintf(stream, "%.*s\n", (int) (end - begin), begin);
-      while (*begin && *begin <= ' ') {
-        ++begin;
-        putc(' ', stream);
+      if (self->col) {
+        while (--self->col) putc(' ', stream);
+      } else {
+        while (*begin && *(begin++) <= ' ') putc(' ', stream);
       }
       fputs("^\n", stream);
     }
+    fclose(file);
   }
 }
 
