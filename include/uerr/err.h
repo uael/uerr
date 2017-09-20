@@ -274,19 +274,19 @@ err_dump(err_t *__restrict__ self, FILE *__restrict stream) {
   switch (self->lvl) {
     case ERRLVL_NOTICE:
       lvl = "notice";
-      lvl_color = BOLD CYAN;
+      lvl_color = CYAN;
       break;
     case ERRLVL_WARNING:
       lvl = "warning";
-      lvl_color = BOLD YELLOW;
+      lvl_color = YELLOW;
       break;
     case ERRLVL_FATAL:
       lvl = "fatal";
-      lvl_color = BOLD RED;
+      lvl_color = RED;
       break;
     default:
       lvl = "error";
-      lvl_color = BOLD RED;
+      lvl_color = RED;
       break;
   }
   fprintf(stream,
@@ -295,13 +295,13 @@ err_dump(err_t *__restrict__ self, FILE *__restrict stream) {
   );
   if (self->code > 0 && self->code != ERRNO_USR) {
     fprintf(stream,
-      BOLD "%s:%d: %s%s (%d):" " %s\n" RESET,
-      self->file, self->line, lvl_color, lvl, self->code, self->msg
+      BOLD "%s:%d:" RESET " %s" BOLD "%s (%d):" RESET " %s%s\n" RESET,
+      self->file, self->line, lvl_color, lvl, self->code, lvl_color, self->msg
     );
   } else {
     fprintf(stream,
-      BOLD "%s:%d: %s%s:" " %s\n" RESET,
-      self->file, self->line, lvl_color, lvl, self->msg
+      BOLD "%s:%d:" RESET " %s" BOLD "%s:" RESET " %s%s\n" RESET,
+      self->file, self->line, lvl_color, lvl, lvl_color, self->msg
     );
   }
   if ((file = fopen(self->file, "r")) != nil) {
