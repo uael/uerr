@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include "no.h"
 #include "lvl.h"
@@ -60,11 +61,16 @@ __err(err_t * self,
 }
 
 __extern_c__
-static FORCEINLINE err_t *
+static err_t *
 __err_usr(err_t * self,
-  errlvl_t lvl, i8_t const *fn, i8_t const *file, u32_t line, i8_t const *msg) {
+  errlvl_t lvl, i8_t const *fn, i8_t const *file, u32_t line,
+  i8_t const *msg, ...) {
+  va_list args;
+
   *self = (err_t) {lvl, fn, file, line, ERRNO_USR};
-  strncpy(self->msg, msg, U8_MAX);
+  va_start(args, msg);
+  vsprintf(self->msg, msg, args);
+  va_end(args);
   return self;
 }
 
@@ -73,8 +79,46 @@ err_t __err_last;
 #define err(LVL, CODE) \
   (*__err(&__err_last, LVL, __func__, __file__, __line__, CODE))
 
-#define err_usr(LVL, MSG) \
+#define usrerr(LVL, MSG) \
   (*__err_usr(&__err_last, LVL, __func__, __file__, __line__, MSG))
+
+#define usrerrf(LVL, MSG, ...) \
+  (*__err_usr(&__err_last, LVL, __func__, __file__, __line__, MSG, __VA_ARGS__))
+
+#define syserr() \
+  (*__err(&__err_last, ERRLVL_ERROR, __func__, __file__, __line__, errno))
+
+#define warning(MSG) \
+  (*__err_usr(&__err_last, ERRLVL_WARNING, __func__, __file__, __line__, MSG))
+
+#define warningf(MSG, ...) \
+  (*__err_usr(& \
+    __err_last, ERRLVL_WARNING, __func__, __file__, __line__, MSG, __VA_ARGS__ \
+  ))
+
+#define notice(MSG) \
+  (*__err_usr(&__err_last, ERRLVL_NOTICE, __func__, __file__, __line__, MSG))
+
+#define noticef(MSG, ...) \
+  (*__err_usr(& \
+    __err_last, ERRLVL_NOTICE, __func__, __file__, __line__, MSG, __VA_ARGS__ \
+  ))
+
+#define error(MSG) \
+  (*__err_usr(&__err_last, ERRLVL_ERROR, __func__, __file__, __line__, MSG))
+
+#define errorf(MSG, ...) \
+  (*__err_usr(& \
+    __err_last, ERRLVL_ERROR, __func__, __file__, __line__, MSG, __VA_ARGS__ \
+  ))
+
+#define fatal(MSG) \
+  (*__err_usr(&__err_last, ERRLVL_ERROR, __func__, __file__, __line__, MSG))
+
+#define fatalf(MSG, ...) \
+  (*__err_usr(& \
+    __err_last, ERRLVL_ERROR, __func__, __file__, __line__, MSG, __VA_ARGS__ \
+  ))
 
 struct err_stack {
   u16_t cap, len;
@@ -263,23 +307,23 @@ err_dump(err_t *__restrict__ self, FILE *__restrict stream) {
   if ((file = fopen(self->file, "r")) != nil) {
     i8_t buf[4096], *begin, *end;
     u64_t size;
-    i16_t i;
+    i16_t i, j;
 
     i = 0;
+    j = (i16_t) (self->line - 2);
+    if (j < 0) j = 0;
     begin = end = nil;
-    while (i < self->line && (size = fread(buf, 1, 4096, file)) > 0) {
+    while ((size = fread(buf, 1, 4096, file)) > 0) {
       end = buf;
       loop:
       while (size && *end && *end != '\n') {
         ++end;
-        if (--size == 0) {
-          size = fread(buf, 1, 4096, file);
-          goto loop;
-        }
+        if (--size == 0) continue;
       }
       if (*end == '\n') {
         if (++i == self->line) break;
-        begin = ++end;
+        ++end;
+        if (i < j) begin = end;
         if (--size) goto loop;
       }
     }

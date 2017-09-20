@@ -30,9 +30,9 @@ main(void) {
   err_stack_t stack;
 
   err_stack_ctor(&stack);
-  err_stack_push(&stack, err(ERRLVL_ERROR, ERRNO_BADF));
-  err_stack_push(&stack, err_usr(ERRLVL_NOTICE, "invalid opt."));
-  err_stack_push(&stack, err_usr(ERRLVL_WARNING, "Hello world !"));
+  err_stack_push(&stack, syserr());
+  err_stack_push(&stack, notice("invalid opt."));
+  err_stack_push(&stack, warning("Hello world !"));
   err_stack_dump(&stack, stdout);
   err_stack_dtor(&stack);
   return 0;
