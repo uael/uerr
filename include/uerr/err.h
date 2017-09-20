@@ -141,6 +141,7 @@ err_stack_grow(err_stack_t *__restrict__ self, const u16_t nmem) {
 static FORCEINLINE errno_t
 err_stack_push(err_stack_t *__restrict__ self, err_t item) {
   errno_t err;
+
   if ((err = err_stack_grow(self, 1)) > 0) {
     return err;
   }
@@ -172,6 +173,21 @@ err_stack_pop(err_stack_t *__restrict__ self, err_t *__restrict__ out) {
     self->buf = buf;
   }
   return ERRNO_NOERR;
+}
+
+__extern_c__
+static FORCEINLINE errno_t
+err_stack_merge(err_stack_t *__restrict__ self, err_stack_t *__restrict__ x) {
+  errno_t err;
+
+  if (x->len > 0) {
+    if ((err = err_stack_grow(self, self->len)) > 0) {
+      return err;
+    }
+    memcpy(self->buf + self->len, self->buf, (size_t) x->len * sizeof(err_t));
+    self->len += x->len;
+    err_stack_dtor(x);
+  }
 }
 
 __extern_c__
