@@ -32,8 +32,6 @@
 #include <errno.h>
 
 enum errno_wrap {
-  ERRNO_USR = -1,
-  ERRNO_NOERR = 0,
   ERRNO_PERM = EPERM,
   ERRNO_NOENT = ENOENT,
   ERRNO_SRCH = ESRCH,
@@ -72,7 +70,8 @@ enum errno_wrap {
   ERRNO_NOLCK = ENOLCK,
   ERRNO_NOSYS = ENOSYS,
   ERRNO_NOTEMPTY = ENOTEMPTY,
-  ERRNO_ILSEQ = EILSEQ
+  ERRNO_ILSEQ = EILSEQ,
+  ERRNO_USR = ERRNO_ILSEQ + 1
 };
 
 typedef enum errno_wrap errno_t;

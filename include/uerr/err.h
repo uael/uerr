@@ -217,7 +217,7 @@ err_dump(err_t *__restrict__ self, FILE *__restrict stream) {
       lvl = "error";
       break;
   }
-  if (self->code > 0) {
+  if (self->code > 0 && self->code != ERRNO_USR) {
     fprintf(stream, "%s (%d): '%s' in %s@%s:%d\n",
       lvl, self->code, self->msg, self->fn, self->file, self->line
     );
