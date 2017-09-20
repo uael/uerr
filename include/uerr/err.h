@@ -258,11 +258,11 @@ err_stack_merge(err_stack_t *__restrict__ self, err_stack_t *__restrict__ x) {
 # define CYAN    "\033[36m"
 # define BOLD    "\033[1m"
 #else
-# define RESET
-# define RED
-# define YELLOW
-# define CYAN
-# define BOLD
+# define RESET ""
+# define RED ""
+# define YELLOW ""
+# define CYAN ""
+# define BOLD ""
 #endif
 
 __extern_c__
