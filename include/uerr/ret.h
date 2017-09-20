@@ -23,15 +23,18 @@
  * SOFTWARE.
  */
 
-/*!@file uerr.h
+/*!@file uerr/ret.h
  * @author uael
  */
-#ifndef __UERR_H
-# define __UERR_H
+#ifndef __UERR_RET_H
+# define __UERR_RET_H
 
-#include "uerr/err.h"
-#include "uerr/lvl.h"
-#include "uerr/no.h"
-#include "uerr/ret.h"
+enum ret {
+  RET_SUCCESS = 0,
+  RET_FAILURE = 1,
+  RET_ERRNO = 2
+};
 
-#endif /* !__UERR_H */
+typedef enum ret ret_t;
+
+#endif /* !__UERR_RET_H */
