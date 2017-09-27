@@ -52,7 +52,7 @@ struct err {
 };
 
 __extern_c__
-static FORCEINLINE err_t *
+static FORCEINLINE UNUSED err_t *
 __err(err_t * self,
   errlvl_t lvl, i8_t const *fn, i8_t const *file, u32_t line, errno_t no) {
   *self = (err_t) {lvl, fn, file, line, no};
@@ -61,7 +61,7 @@ __err(err_t * self,
 }
 
 __extern_c__
-static err_t *
+static UNUSED err_t *
 __err_usr(err_t * self,
   errlvl_t lvl, i8_t const *fn, i8_t const *file, u32_t line,
   i8_t const *msg, ...) {
@@ -307,7 +307,8 @@ err_dump(err_t *__restrict__ self, FILE *__restrict stream) {
   if ((file = fopen(self->file, "r")) != nil) {
     i8_t buf[4096], *begin, *end;
     u64_t size;
-    i16_t i, j;
+    u16_t i;
+    i16_t j;
 
     i = 0;
     j = (i16_t) (self->line - 2);
