@@ -293,11 +293,18 @@ err_dump(err_t *__restrict__ self, FILE *__restrict stream) {
       lvl_color = _COLOR_RED;
       break;
   }
-  fprintf(stream,
-    _COLOR_BOLD "%s:" _COLOR_RESET " In function '" _COLOR_BOLD
-      "%s" _COLOR_RESET "':\n",
-    self->file, self->fn
-  );
+  if (self->fn) {
+    fprintf(stream,
+      _COLOR_BOLD "%s:" _COLOR_RESET " In function '" _COLOR_BOLD
+        "%s" _COLOR_RESET "':\n",
+      self->file, self->fn
+    );
+  } else {
+    fprintf(stream,
+      _COLOR_BOLD "%s:" _COLOR_RESET " In function:\n",
+      self->file
+    );
+  }
   if (self->code > 0 && self->code != ERRNO_USR) {
     fprintf(stream,
       _COLOR_BOLD "%s:%d:" _COLOR_RESET " %s" _COLOR_BOLD "%s (%d):"
