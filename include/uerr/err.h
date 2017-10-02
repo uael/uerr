@@ -30,10 +30,6 @@
 # define __UERR_ERR_H
 
 #include <uty.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdarg.h>
 
 #include "no.h"
 #include "lvl.h"
@@ -44,30 +40,38 @@ typedef struct err_stack err_stack_t;
 
 struct err {
   errlvl_t lvl;
-  i8_t const *fn, *file;
+  char_t const *fn, *file;
   u32_t line;
   errno_t code;
-  i8_t msg[U8_MAX];
+  char_t msg[U8_MAX];
   i32_t col;
 };
 
 __extern_c__
 static FORCEINLINE UNUSED err_t *
 __err(err_t * self,
-  errlvl_t lvl, i8_t const *fn, i8_t const *file, u32_t line, errno_t no) {
-  *self = (err_t) {lvl, fn, file, line, no};
-  strncpy(self->msg, strerror(no), U8_MAX);
+  errlvl_t lvl, char_t const *fn, char_t const *file, u32_t line, errno_t no) {
+  self->lvl = lvl;
+  self->fn = fn;
+  self->file = file;
+  self->line = line;
+  self->code = no;
+  strncpy(self->msg, strerror(no), (size_t) U8_MAX);
   return self;
 }
 
 __extern_c__
 static UNUSED err_t *
 __err_usr(err_t * self,
-  errlvl_t lvl, i8_t const *fn, i8_t const *file, u32_t line,
-  i8_t const *msg, ...) {
+  errlvl_t lvl, char_t const *fn, char_t const *file, u32_t line,
+  char_t const *msg, ...) {
   va_list args;
 
-  *self = (err_t) {lvl, fn, file, line, ERRNO_USR};
+  self->lvl = lvl;
+  self->fn = fn;
+  self->file = file;
+  self->line = line;
+  self->code = ERRNO_USR;
   va_start(args, msg);
   vsprintf(self->msg, msg, args);
   va_end(args);
@@ -252,55 +256,58 @@ err_stack_merge(err_stack_t *__restrict__ self, err_stack_t *__restrict__ x) {
 }
 
 #ifndef CC_MSVC
-# define RESET   "\033[0m"
-# define RED     "\033[31m"
-# define YELLOW  "\033[33m"
-# define CYAN    "\033[36m"
-# define BOLD    "\033[1m"
+# define _COLOR_RESET   "\033[0m"
+# define _COLOR_RED     "\033[31m"
+# define _COLOR_YELLOW  "\033[33m"
+# define _COLOR_CYAN    "\033[36m"
+# define _COLOR_BOLD    "\033[1m"
 #else
-# define RESET ""
-# define RED ""
-# define YELLOW ""
-# define CYAN ""
-# define BOLD ""
+# define _COLOR_RESET ""
+# define _COLOR_RED ""
+# define _COLOR_YELLOW ""
+# define _COLOR_CYAN ""
+# define _COLOR_BOLD ""
 #endif
 
 __extern_c__
 static FORCEINLINE void
 err_dump(err_t *__restrict__ self, FILE *__restrict stream) {
-  i8_t const *lvl, *lvl_color;
+  char_t const *lvl, *lvl_color;
   FILE *file;
 
   switch (self->lvl) {
     case ERRLVL_NOTICE:
       lvl = "notice";
-      lvl_color = CYAN;
+      lvl_color = _COLOR_CYAN;
       break;
     case ERRLVL_WARNING:
       lvl = "warning";
-      lvl_color = YELLOW;
+      lvl_color = _COLOR_YELLOW;
       break;
     case ERRLVL_FATAL:
       lvl = "fatal";
-      lvl_color = RED;
+      lvl_color = _COLOR_RED;
       break;
     default:
       lvl = "error";
-      lvl_color = RED;
+      lvl_color = _COLOR_RED;
       break;
   }
   fprintf(stream,
-    BOLD "%s:" RESET " In function ‘" BOLD "%s" RESET "’:\n",
+    _COLOR_BOLD "%s:" _COLOR_RESET " In function '" _COLOR_BOLD
+      "%s" _COLOR_RESET "':\n",
     self->file, self->fn
   );
   if (self->code > 0 && self->code != ERRNO_USR) {
     fprintf(stream,
-      BOLD "%s:%d:" RESET " %s" BOLD "%s (%d):" RESET " %s%s\n" RESET,
+      _COLOR_BOLD "%s:%d:" _COLOR_RESET " %s" _COLOR_BOLD "%s (%d):"
+        _COLOR_RESET " %s%s\n" _COLOR_RESET,
       self->file, self->line, lvl_color, lvl, self->code, lvl_color, self->msg
     );
   } else {
     fprintf(stream,
-      BOLD "%s:%d:" RESET " %s" BOLD "%s:" RESET " %s%s\n" RESET,
+      _COLOR_BOLD "%s:%d:" _COLOR_RESET " %s" _COLOR_BOLD "%s:" _COLOR_RESET
+        " %s%s\n" _COLOR_RESET,
       self->file, self->line, lvl_color, lvl, lvl_color, self->msg
     );
   }
