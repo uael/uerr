@@ -183,6 +183,7 @@ __extern_c__
 static FORCEINLINE ret_t
 err_stack_grow(err_stack_t *__restrict self, __const u16_t nmem) {
   u16_t u;
+
   u = self->len + nmem;
   if (u < self->len) {
     u = U16_MAX;
@@ -319,7 +320,7 @@ err_dump(err_t *__restrict self, FILE *__restrict stream) {
     );
   }
   if ((file = fopen(self->file, "r")) != nil) {
-    i8_t buf[4096], *begin, *end;
+    char_t buf[4096], *begin, *end;
     u64_t size;
     u16_t i;
     i16_t j;
