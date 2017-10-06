@@ -37,7 +37,7 @@ if (MSVC)
     INTERFACE /O$<$<CONFIG:Debug>:d>$<$<CONFIG:Release>:x>)
 else ()
   target_compile_options(uerr
-    INTERFACE -Wall -Werror -Wextra -fomit-frame-pointer -ansi
+    INTERFACE -Wall -Werror -Wextra -fomit-frame-pointer -ansi -pedantic -pedantic
     INTERFACE -Wno-missing-field-initializers
     INTERFACE -O$<$<CONFIG:Debug>:0 -g3>$<$<CONFIG:Release>:3>)
 endif ()
