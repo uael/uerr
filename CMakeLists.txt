@@ -32,7 +32,8 @@ set(CMAKE_C_FLAGS_RELEASE "")
 
 if (MSVC)
   target_compile_options(uerr
-    INTERFACE /MT$<$<CONFIG:Debug>:d> /Oy /Za
+    INTERFACE /MT$<$<CONFIG:Debug>:d> /Oy /Za /W3
+    INTERFACE /D_CRT_SECURE_NO_WARNINGS
     INTERFACE /O$<$<CONFIG:Debug>:d>$<$<CONFIG:Release>:x>)
 else ()
   target_compile_options(uerr
@@ -42,12 +43,12 @@ else ()
 endif ()
 
 get_directory_property(uerr_PARENT PARENT_DIRECTORY)
-if (NOT ${uerr_PARENT})
+if (NOT uerr_PARENT)
   set(uerr_DEVEL TRUE)
-elseif (NOT ${uerr_DEVEL})
+elseif (NOT uerr_DEVEL)
   set(uerr_DEVEL FALSE)
 endif ()
-if (${uerr_DEVEL} AND EXISTS ${uerr_TEST_DIR})
+if (uerr_DEVEL AND EXISTS ${uerr_TEST_DIR})
   if (NOT uerr_PARENT)
     enable_testing()
   endif ()
@@ -55,10 +56,10 @@ if (${uerr_DEVEL} AND EXISTS ${uerr_TEST_DIR})
   file(GLOB uerr_TEST_SRCS ${uerr_TEST_SRCS} ${uerr_TEST_DIR}/*.c)
   foreach (uerr_TEST_SRC ${uerr_TEST_SRCS})
     get_filename_component(uerr_TEST_NAME ${uerr_TEST_SRC} NAME_WE)
-    add_executable(test_${uerr_TEST_NAME} ${uerr_TEST_SRC})
-    add_dependencies(test_${uerr_TEST_NAME} uerr)
-    target_link_libraries(test_${uerr_TEST_NAME} uerr)
-    add_test(${uerr_TEST_NAME} test_${uerr_TEST_NAME})
+    add_executable(test_uerr_${uerr_TEST_NAME} ${uerr_TEST_SRC})
+    add_dependencies(test_uerr_${uerr_TEST_NAME} uerr)
+    target_link_libraries(test_uerr_${uerr_TEST_NAME} uerr)
+    add_test(${uerr_TEST_NAME} test_uerr_${uerr_TEST_NAME})
   endforeach ()
 endif ()
 

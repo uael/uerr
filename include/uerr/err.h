@@ -40,7 +40,7 @@ typedef struct err_stack err_stack_t;
 
 struct err {
   errlvl_t lvl;
-  char_t const *fn, *file;
+  char_t __const *fn, *file;
   u32_t line;
   errno_t code;
   char_t msg[U8_MAX];
@@ -50,7 +50,7 @@ struct err {
 __extern_c__
 static FORCEINLINE UNUSED err_t *
 __err(err_t * self,
-  errlvl_t lvl, char_t const *fn, char_t const *file, u32_t line, errno_t no) {
+  errlvl_t lvl, char_t __const *fn, char_t __const *file, u32_t line, errno_t no) {
   self->lvl = lvl;
   self->fn = fn;
   self->file = file;
@@ -63,8 +63,8 @@ __err(err_t * self,
 __extern_c__
 static UNUSED err_t *
 __err_usr(err_t * self,
-  errlvl_t lvl, char_t const *fn, char_t const *file, u32_t line,
-  char_t const *msg, ...) {
+  errlvl_t lvl, char_t __const *fn, char_t __const *file, u32_t line,
+  char_t __const *msg, ...) {
   va_list args;
 
   self->lvl = lvl;
@@ -81,47 +81,47 @@ __err_usr(err_t * self,
 err_t __err_last;
 
 #define err(LVL, CODE) \
-  (*__err(&__err_last, LVL, __func__, __file__, __line__, CODE))
+  (*__err(&__err_last, LVL, __pretty_func__, __file__, __line__, CODE))
 
 #define usrerr(LVL, MSG) \
-  (*__err_usr(&__err_last, LVL, __func__, __file__, __line__, MSG))
+  (*__err_usr(&__err_last, LVL, __pretty_func__, __file__, __line__, MSG))
 
 #define usrerrf(LVL, MSG, ...) \
-  (*__err_usr(&__err_last, LVL, __func__, __file__, __line__, MSG, __VA_ARGS__))
+  (*__err_usr(&__err_last, LVL, __pretty_func__, __file__, __line__, MSG, __VA_ARGS__))
 
 #define syserr() \
-  (*__err(&__err_last, ERRLVL_ERROR, __func__, __file__, __line__, errno))
+  (*__err(&__err_last, ERRLVL_ERROR, __pretty_func__, __file__, __line__, errno))
 
 #define warning(MSG) \
-  (*__err_usr(&__err_last, ERRLVL_WARNING, __func__, __file__, __line__, MSG))
+  (*__err_usr(&__err_last, ERRLVL_WARNING, __pretty_func__, __file__, __line__, MSG))
 
 #define warningf(MSG, ...) \
   (*__err_usr(& \
-    __err_last, ERRLVL_WARNING, __func__, __file__, __line__, MSG, __VA_ARGS__ \
+    __err_last, ERRLVL_WARNING, __pretty_func__, __file__, __line__, MSG, __VA_ARGS__ \
   ))
 
 #define notice(MSG) \
-  (*__err_usr(&__err_last, ERRLVL_NOTICE, __func__, __file__, __line__, MSG))
+  (*__err_usr(&__err_last, ERRLVL_NOTICE, __pretty_func__, __file__, __line__, MSG))
 
 #define noticef(MSG, ...) \
   (*__err_usr(& \
-    __err_last, ERRLVL_NOTICE, __func__, __file__, __line__, MSG, __VA_ARGS__ \
+    __err_last, ERRLVL_NOTICE, __pretty_func__, __file__, __line__, MSG, __VA_ARGS__ \
   ))
 
 #define error(MSG) \
-  (*__err_usr(&__err_last, ERRLVL_ERROR, __func__, __file__, __line__, MSG))
+  (*__err_usr(&__err_last, ERRLVL_ERROR, __pretty_func__, __file__, __line__, MSG))
 
 #define errorf(MSG, ...) \
   (*__err_usr(& \
-    __err_last, ERRLVL_ERROR, __func__, __file__, __line__, MSG, __VA_ARGS__ \
+    __err_last, ERRLVL_ERROR, __pretty_func__, __file__, __line__, MSG, __VA_ARGS__ \
   ))
 
 #define fatal(MSG) \
-  (*__err_usr(&__err_last, ERRLVL_ERROR, __func__, __file__, __line__, MSG))
+  (*__err_usr(&__err_last, ERRLVL_ERROR, __pretty_func__, __file__, __line__, MSG))
 
 #define fatalf(MSG, ...) \
   (*__err_usr(& \
-    __err_last, ERRLVL_ERROR, __func__, __file__, __line__, MSG, __VA_ARGS__ \
+    __err_last, ERRLVL_ERROR, __pretty_func__, __file__, __line__, MSG, __VA_ARGS__ \
   ))
 
 struct err_stack {
@@ -131,7 +131,7 @@ struct err_stack {
 
 __extern_c__
 static FORCEINLINE void
-err_stack_ctor(err_stack_t *__restrict__ self) {
+err_stack_ctor(err_stack_t *__restrict self) {
   *self = (err_stack_t) {
     .cap = 0,
     .len = 0,
@@ -141,7 +141,7 @@ err_stack_ctor(err_stack_t *__restrict__ self) {
 
 __extern_c__
 static FORCEINLINE void
-err_stack_dtor(err_stack_t *__restrict__ self) {
+err_stack_dtor(err_stack_t *__restrict self) {
   self->cap = 0;
   self->len = 0;
   if (self->buf) {
@@ -152,7 +152,7 @@ err_stack_dtor(err_stack_t *__restrict__ self) {
 
 __extern_c__
 static FORCEINLINE ret_t
-err_stack_growth(err_stack_t *__restrict__ self, const u16_t nmin) {
+err_stack_growth(err_stack_t *__restrict self, __const u16_t nmin) {
   if (nmin > 0) {
     if (self->cap) {
       if (self->cap < nmin) {
@@ -181,17 +181,17 @@ err_stack_growth(err_stack_t *__restrict__ self, const u16_t nmin) {
 
 __extern_c__
 static FORCEINLINE ret_t
-err_stack_grow(err_stack_t *__restrict__ self, const u16_t nmem) {
+err_stack_grow(err_stack_t *__restrict self, __const u16_t nmem) {
   u16_t u;
   u = self->len + nmem;
   if (u < self->len) {
     u = U16_MAX;
   }
-  return err_stack_growth(self, (const u16_t) u);
+  return err_stack_growth(self, (__const u16_t) u);
 }
 
 static FORCEINLINE ret_t
-err_stack_push(err_stack_t *__restrict__ self, err_t item) {
+err_stack_push(err_stack_t *__restrict self, err_t item) {
   ret_t ret;
 
   if ((ret = err_stack_grow(self, 1)) > 0) {
@@ -201,7 +201,7 @@ err_stack_push(err_stack_t *__restrict__ self, err_t item) {
   return RET_SUCCESS;
 }
 
-#if __has_builtin(__builtin_popcount)
+#if __has_builtin__(popcount)
 #define __ISPOW2(n) (__builtin_popcount(n) == 1)
 #else
 #define __ISPOW2(n) (((n) != 0) && (((n) & (~(n) + 1)) == (n)))
@@ -209,7 +209,7 @@ err_stack_push(err_stack_t *__restrict__ self, err_t item) {
 
 __extern_c__
 static FORCEINLINE ret_t
-err_stack_pop(err_stack_t *__restrict__ self, err_t *__restrict__ out) {
+err_stack_pop(err_stack_t *__restrict self, err_t *__restrict out) {
   if (self->len == 0) {
     return RET_FAILURE;
   }
@@ -241,7 +241,7 @@ err_stack_pop(err_stack_t *__restrict__ self, err_t *__restrict__ out) {
 
 __extern_c__
 static FORCEINLINE ret_t
-err_stack_merge(err_stack_t *__restrict__ self, err_stack_t *__restrict__ x) {
+err_stack_merge(err_stack_t *__restrict self, err_stack_t *__restrict x) {
   ret_t ret;
 
   if (x->len > 0) {
@@ -271,8 +271,8 @@ err_stack_merge(err_stack_t *__restrict__ self, err_stack_t *__restrict__ x) {
 
 __extern_c__
 static FORCEINLINE void
-err_dump(err_t *__restrict__ self, FILE *__restrict stream) {
-  char_t const *lvl, *lvl_color;
+err_dump(err_t *__restrict self, FILE *__restrict stream) {
+  char_t __const *lvl, *lvl_color;
   FILE *file;
 
   switch (self->lvl) {
@@ -357,7 +357,7 @@ err_dump(err_t *__restrict__ self, FILE *__restrict stream) {
 
 __extern_c__
 static FORCEINLINE ret_t
-err_stack_dump(err_stack_t *__restrict__ self, FILE *__restrict stream) {
+err_stack_dump(err_stack_t *__restrict self, FILE *__restrict stream) {
   ret_t ret;
   err_t err;
 
